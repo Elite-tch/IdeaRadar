@@ -57,9 +57,9 @@ function buildDifferent(payload: CompanyPayload, overlapLabel: string) {
   const items = [
     payload.tags[0] ? `Their core angle is ${payload.tags[0]}` : null,
     payload.subindustry && payload.subindustry !== payload.industry
-      ? `Narrower focus: ${payload.subindustry}`
+      ? `They are more narrowly focused on ${payload.subindustry}.`
       : null,
-    overlapLabel ? `Your idea is more about ${overlapLabel}` : null,
+    overlapLabel ? `Your idea leans more toward ${overlapLabel}.` : null,
   ].filter((item): item is string => Boolean(item));
 
   return items.slice(0, 3);
