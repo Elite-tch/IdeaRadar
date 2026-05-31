@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ensureCompanyCollection, getQdrantClient } from "../lib/qdrant-runtime.js";
+import { embedImage } from "../lib/local-image-embedding.js";
 
 const ROOT = process.cwd();
 const DATA_FILE = path.join(ROOT, "data", "yc-companies-all.json");
@@ -12,6 +13,7 @@ const COLLECTION = process.env.QDRANT_COLLECTION ?? "idea_radar_yc_companies";
 const QDRANT_URL = process.env.QDRANT_URL ?? "http://localhost:6333";
 const INFERENCE_MODEL =
   process.env.QDRANT_INFERENCE_MODEL ?? "sentence-transformers/all-MiniLM-L6-v2";
+const SPARSE_MODEL = process.env.QDRANT_SPARSE_MODEL ?? "qdrant/bm25";
 const UPSERT_BATCH_SIZE = 64;
 
 const limitArg = process.argv.find((arg) => arg.startsWith("--limit="));
@@ -30,19 +32,21 @@ const companies = JSON.parse(raw)
 console.log(`Preparing ${companies.length} YC companies for ${COLLECTION}.`);
 console.log(`Using Qdrant at ${new URL(QDRANT_URL).host}.`);
 console.log(`Using Qdrant Cloud Inference model: ${INFERENCE_MODEL}.`);
+console.log(`Using sparse model: ${SPARSE_MODEL}.`);
+console.log(`Using local image model: Xenova/clip-vit-base-patch32.`);
 await ensureCompanyCollection();
 
 let embedded = 0;
 for (let index = 0; index < companies.length; index += UPSERT_BATCH_SIZE) {
   const batch = companies.slice(index, index + UPSERT_BATCH_SIZE);
-  const points = batch.map((company) => ({
-    id: company.id,
-    vector: {
-      text: buildCompanyText(company),
-      model: INFERENCE_MODEL,
-    },
-    payload: toPayload(company),
-  }));
+  const points = [];
+  for (const company of batch) {
+    points.push({
+      id: company.id,
+      vector: await buildPointVectors(company),
+      payload: toPayload(company),
+    });
+  }
 
   await upsertWithRetry(points);
 
@@ -111,6 +115,30 @@ function buildCompanyText(company) {
   ]
     .filter((section) => !section.endsWith(": "))
     .join("\n");
+}
+
+async function buildPointVectors(company) {
+  const denseText = buildCompanyText(company);
+  const vectors = {
+    dense: {
+      text: denseText,
+      model: INFERENCE_MODEL,
+    },
+    keywords: {
+      text: denseText,
+      model: SPARSE_MODEL,
+    },
+  };
+
+  const logoUrl = cleanString(company.small_logo_thumb_url);
+  if (logoUrl) {
+    const visualVector = await embedImage(logoUrl);
+    if (visualVector) {
+      vectors.visual = visualVector;
+    }
+  }
+
+  return vectors;
 }
 
 function toPayload(company) {
