@@ -1,15 +1,8 @@
 import mammoth from "mammoth";
-import { pathToFileURL } from "node:url";
 import { join } from "node:path";
-import { PDFParse } from "pdf-parse";
+import { pathToFileURL } from "node:url";
 
 export const runtime = "nodejs";
-
-PDFParse.setWorker(
-  pathToFileURL(
-    join(process.cwd(), "node_modules", "pdf-parse", "dist", "pdf-parse", "web", "pdf.worker.mjs"),
-  ).href,
-);
 
 const SUPPORTED_TYPES = new Map([
   ["application/pdf", "pdf"],
@@ -43,6 +36,38 @@ export async function POST(request: Request) {
     let text = "";
 
     if (fileType === "pdf" || extension === "pdf") {
+      const { DOMMatrix } = await import(
+        pathToFileURL(
+          join(
+            process.cwd(),
+            "node_modules",
+            "pdf-parse",
+            "node_modules",
+            "@napi-rs",
+            "canvas",
+            "index.js",
+          ),
+        ).href
+      );
+
+      if (typeof globalThis.DOMMatrix === "undefined") {
+        globalThis.DOMMatrix = DOMMatrix;
+      }
+
+      const { PDFParse } = await import(
+        pathToFileURL(
+          join(
+            process.cwd(),
+            "node_modules",
+            "pdf-parse",
+            "dist",
+            "pdf-parse",
+            "esm",
+            "PDFParse.js",
+          ),
+        ).href
+      );
+
       const parser = new PDFParse({ data: Buffer.from(bytes) });
       try {
         const result = await parser.getText();
