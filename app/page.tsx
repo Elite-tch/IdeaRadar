@@ -1,10 +1,12 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
   FileText,
   LoaderCircle,
+  Mic,
+  MicOff,
   Radar,
   Search,
   SlidersHorizontal,
@@ -57,12 +59,15 @@ const modes = [
 export default function Home() {
   const [ideaText, setIdeaText] = useState("");
   const [mode, setMode] = useState<(typeof modes)[number]["value"]>("competitors");
-  const [imageUrl, setImageUrl] = useState("");
+  const [projectUrl, setProjectUrl] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
   const [facets, setFacets] = useState<Facets | null>(null);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [error, setError] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   useEffect(() => {
     fetch("/api/facets")
@@ -96,6 +101,52 @@ export default function Home() {
     });
   }, [results]);
 
+  function toggleVoiceRecording() {
+    const win = window as Window & {
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+    };
+
+    const Recognition = win.SpeechRecognition ?? win.webkitSpeechRecognition;
+    if (!Recognition) {
+      alert("Voice input is not supported in this browser.");
+      return;
+    }
+
+    if (!recognitionRef.current) {
+      const recognition = new Recognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+      recognition.onresult = (event: unknown) => {
+        const speechEvent = event as {
+          results?: Array<Array<{ transcript: string }>>;
+        };
+        const transcript = speechEvent.results
+          ?.map((result) => result[0]?.transcript ?? "")
+          .join(" ")
+          .trim();
+
+        if (transcript) {
+          setIdeaText((current) => `${current}${current ? "\n" : ""}${transcript}`.trim());
+        }
+      };
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+      recognitionRef.current = recognition;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      return;
+    }
+
+    setIsListening(true);
+    recognitionRef.current.start();
+  }
+
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSearching(true);
@@ -107,7 +158,8 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ideaText,
-          imageUrl,
+          projectUrl,
+          githubUrl,
           mode,
           limit: 8,
         }),
@@ -185,17 +237,27 @@ export default function Home() {
             <label className="text-sm font-semibold" htmlFor="idea">
               Idea document
             </label>
-            <textarea
-              id="idea"
-              className="min-h-46 w-full resize-y rounded-md border border-stone-300 bg-white p-3 text-sm leading-6 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 no-scrollbar"
-              style={{
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-              }}
-              value={ideaText}
-              onChange={(event) => setIdeaText(event.target.value)}
-              placeholder="Paste a PRD, pitch, README, product spec, or customer problem note..."
-            />
+            <div className="relative">
+              <textarea
+                id="idea"
+                className="min-h-46 w-full resize-y rounded-md border border-stone-300 bg-white p-3 pr-12 text-sm leading-6 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 no-scrollbar"
+                style={{
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                }}
+                value={ideaText}
+                onChange={(event) => setIdeaText(event.target.value)}
+                placeholder="Paste a PRD, pitch, README, product spec, or customer problem note..."
+              />
+              <button
+                className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-full border border-stone-300 bg-white text-stone-600 shadow-sm hover:bg-stone-50"
+                type="button"
+                onClick={() => toggleVoiceRecording()}
+                aria-label={isListening ? "Stop voice input" : "Start voice input"}
+              >
+                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+              </button>
+            </div>
             <div className="flex items-center justify-between gap-3">
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm font-medium hover:bg-stone-50">
                 <FileText size={16} />
@@ -214,19 +276,35 @@ export default function Home() {
               Supported files: DOCX, TXT, MD, Markdown, JSON, CSV.
             </p>
             <div className="space-y-2">
-              <label className="text-sm font-semibold" htmlFor="imageUrl">
-                Optional visual reference
+              <label className="text-sm font-semibold" htmlFor="githubUrl">
+                GitHub repo URL
               </label>
               <input
-                id="imageUrl"
+                id="githubUrl"
                 className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
                 type="url"
-                value={imageUrl}
-                onChange={(event) => setImageUrl(event.target.value)}
-                placeholder="Paste an image URL to blend visual similarity into the search..."
+                value={githubUrl}
+                onChange={(event) => setGithubUrl(event.target.value)}
+                placeholder="Paste a GitHub repository URL..."
               />
               <p className="text-xs leading-5 text-stone-500">
-                This adds a visual signal to the search without changing the main idea document flow.
+                We read the README first. If there is no README, you’ll see “No README found.”
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold" htmlFor="projectUrl">
+                Live project URL
+              </label>
+              <input
+                id="projectUrl"
+                className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                type="url"
+                value={projectUrl}
+                onChange={(event) => setProjectUrl(event.target.value)}
+                placeholder="Paste a live demo or product URL..."
+              />
+              <p className="text-xs leading-5 text-stone-500">
+                We pull the page title, description, and visible text summary.
               </p>
             </div>
           </div>
@@ -479,3 +557,13 @@ function hashString(value: string) {
 
   return hash;
 }
+
+type SpeechRecognitionLike = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: unknown) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};

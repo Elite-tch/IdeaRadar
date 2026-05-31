@@ -1,15 +1,15 @@
 import { z } from "zod";
 import { COLLECTION_NAME } from "@/lib/config";
 import { analyzeMatches } from "@/lib/analysis";
-import { embedImage } from "@/lib/local-image-embedding.js";
 import { getQdrantClient } from "@/lib/qdrant-runtime.js";
-import { buildIdeaText } from "@/lib/yc";
+import { resolveIdeaSources } from "@/lib/idea-sources.js";
 
 export const runtime = "nodejs";
 
 const SearchSchema = z.object({
   ideaText: z.string().min(50).max(12000),
-  imageUrl: z.string().url().optional().or(z.literal("")),
+  projectUrl: z.string().url().optional().or(z.literal("")),
+  githubUrl: z.string().url().optional().or(z.literal("")),
   targetUser: z.string().max(500).optional(),
   problem: z.string().max(1000).optional(),
   solution: z.string().max(1000).optional(),
@@ -49,15 +49,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    const ideaText = buildIdeaText(parsed.data);
+    const ideaText = await resolveIdeaSources(parsed.data);
     const qdrant = getQdrantClient();
     const modeWeights =
       parsed.data.mode === "competitors"
-        ? parsed.data.imageUrl
-          ? [0.5, 0.35, 0.15]
+        ? parsed.data.projectUrl || parsed.data.githubUrl
+          ? [0.5, 0.5]
           : [0.7, 0.3]
-        : parsed.data.imageUrl
-          ? [0.45, 0.4, 0.15]
+        : parsed.data.projectUrl || parsed.data.githubUrl
+          ? [0.45, 0.55]
           : [0.6, 0.4];
     const denseQuery = {
       text: ideaText,
@@ -87,16 +87,6 @@ export async function POST(request: Request) {
         filter: buildFilter(parsed.data),
       },
     ];
-
-    if (parsed.data.imageUrl) {
-      const imageEmbedding = await embedImage(parsed.data.imageUrl);
-      prefetch.push({
-        using: "visual",
-        query: imageEmbedding,
-        limit: 24,
-        filter: buildFilter(parsed.data),
-      });
-    }
 
     const results = await qdrant.query(COLLECTION_NAME, {
       prefetch,
