@@ -1,0 +1,90 @@
+import type { CompanyPayload } from "@/lib/yc";
+
+export type MatchAnalysis = {
+  id: number;
+  verdict: "direct competitor" | "adjacent" | "inspiration";
+  common: string[];
+  different: string[];
+  differentiation: string;
+  risk: "low" | "medium" | "high";
+};
+
+export function analyzeMatches(args: {
+  ideaText: string;
+  matches: Array<{ id: number; score: number; payload: CompanyPayload }>;
+}): MatchAnalysis[] {
+  const ideaTokens = tokenize(args.ideaText);
+
+  return args.matches.map((match) => {
+    const companyTokens = tokenize(
+      [
+        match.payload.name,
+        match.payload.one_liner,
+        match.payload.long_description,
+        match.payload.industry,
+        match.payload.subindustry,
+        match.payload.tags.join(" "),
+      ].join(" "),
+    );
+
+    const overlap = intersection(ideaTokens, companyTokens);
+    const verdict = overlap.length >= 5 ? "direct competitor" : overlap.length >= 3 ? "adjacent" : "inspiration";
+    const risk = verdict === "direct competitor" ? "high" : verdict === "adjacent" ? "medium" : "low";
+
+    return {
+      id: match.id,
+      verdict,
+      risk,
+      common: buildCommon(match.payload, overlap),
+      different: buildDifferent(match.payload, overlap),
+      differentiation: buildDifferentiation(match.payload, overlap, verdict),
+    };
+  });
+}
+
+function buildCommon(payload: CompanyPayload, overlap: string[]) {
+  const items = [
+    overlap[0] ? `Shared theme: ${overlap[0]}` : null,
+    payload.industry ? `Same broader category: ${payload.industry}` : null,
+    payload.stage !== "Unknown" ? `Comparable stage: ${payload.stage}` : null,
+  ].filter((item): item is string => Boolean(item));
+
+  return items.slice(0, 3);
+}
+
+function buildDifferent(payload: CompanyPayload, overlap: string[]) {
+  const items = [
+    payload.tags[0] ? `They emphasize ${payload.tags[0]}` : null,
+    payload.subindustry && payload.subindustry !== payload.industry
+      ? `Narrower focus: ${payload.subindustry}`
+      : null,
+    overlap.length < 3 ? "Your idea appears broader or less direct" : "Your idea is close in language and positioning",
+  ].filter((item): item is string => Boolean(item));
+
+  return items.slice(0, 3);
+}
+
+function buildDifferentiation(payload: CompanyPayload, overlap: string[], verdict: MatchAnalysis["verdict"]) {
+  if (verdict === "direct competitor") {
+    return `You need a sharper wedge than ${payload.name}. Their positioning is already close to your idea.`;
+  }
+
+  if (verdict === "adjacent") {
+    return `Differentiate by choosing a narrower user, workflow, or distribution angle than ${payload.name}.`;
+  }
+
+  return `Use ${payload.name} as inspiration, then focus on a more specific problem or customer segment.`;
+}
+
+function tokenize(value: string) {
+  return value
+    .toLowerCase()
+    .split(/[^a-z0-9]+/g)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 2);
+}
+
+function intersection(first: string[], second: string[]) {
+  const set = new Set(second);
+  return Array.from(new Set(first.filter((token) => set.has(token))));
+}
