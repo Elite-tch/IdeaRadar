@@ -223,8 +223,8 @@ export default function Home() {
                 <button
                   key={item.value}
                   className={`rounded-md border px-3 py-2 text-sm font-medium ${mode === item.value
-                      ? "border-emerald-700 bg-emerald-700 text-white"
-                      : "border-stone-300 bg-white hover:bg-stone-50"
+                    ? "border-emerald-700 bg-emerald-700 text-white"
+                    : "border-stone-300 bg-white hover:bg-stone-50"
                     }`}
                   type="button"
                   onClick={() => setMode(item.value)}
@@ -247,87 +247,7 @@ export default function Home() {
         </aside>
 
         <section className="min-h-[620px]">
-          {results.length > 0 && !isSearching ? (
-            <div className="mb-4 rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold">Semantic landscape</h2>
-                  <p className="text-sm text-stone-600">
-                    A quick visual map of the strongest matches, arranged by proximity and risk.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3 text-xs text-stone-500">
-                  <span>Higher score = closer</span>
-                  <span>•</span>
-                  <span>Risk = bubble size</span>
-                </div>
-              </div>
 
-              <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_220px]">
-                <div className="relative h-[260px] overflow-hidden rounded-2xl border border-stone-200 bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.09),transparent_34%),radial-gradient(circle_at_80%_30%,rgba(251,191,36,0.08),transparent_30%),linear-gradient(to_bottom,#fff,#faf9f5)]">
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(120,113,108,0.09)_1px,transparent_1px),linear-gradient(to_bottom,rgba(120,113,108,0.09)_1px,transparent_1px)] bg-[size:22px_22px] opacity-50" />
-                  <div className="absolute left-4 top-3 text-[11px] font-medium uppercase tracking-[0.2em] text-stone-400">
-                    More direct
-                  </div>
-                  <div className="absolute right-4 top-3 text-[11px] font-medium uppercase tracking-[0.2em] text-stone-400">
-                    More adjacent
-                  </div>
-                  <div className="absolute left-4 bottom-3 text-[11px] font-medium uppercase tracking-[0.2em] text-stone-400">
-                    Lower score
-                  </div>
-                  <div className="absolute right-4 bottom-3 text-[11px] font-medium uppercase tracking-[0.2em] text-stone-400">
-                    Higher score
-                  </div>
-
-                  {landscapePoints.map((point) => (
-                    <div
-                      className="absolute"
-                      key={point.id}
-                      style={{
-                        left: `${point.x}%`,
-                        top: `${point.y}%`,
-                        transform: "translate(-50%, -50%)",
-                      }}
-                    >
-                      <div
-                        className={`flex items-center gap-2 rounded-full border border-white/80 px-2 py-1 text-xs font-medium shadow-sm backdrop-blur ${
-                          point.risk === "high"
-                            ? "bg-amber-100 text-amber-900"
-                            : point.risk === "medium"
-                              ? "bg-lime-100 text-lime-900"
-                              : "bg-emerald-100 text-emerald-900"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block rounded-full ${
-                            point.risk === "high"
-                              ? "bg-amber-500"
-                              : point.risk === "medium"
-                                ? "bg-lime-500"
-                                : "bg-emerald-500"
-                          }`}
-                          style={{
-                            width: `${10 + point.score * 12}px`,
-                            height: `${10 + point.score * 12}px`,
-                          }}
-                        />
-                        <span className="max-w-[120px] truncate">{point.name}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                  <h3 className="text-sm font-semibold">Reading the map</h3>
-                  <ul className="mt-3 space-y-3 text-sm leading-6 text-stone-600">
-                    <li>• Bigger bubbles are higher-risk matches.</li>
-                    <li>• The left edge is closer to the core idea; the right edge is more adjacent.</li>
-                    <li>• The map only shows the strongest matches to keep the demo readable.</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          ) : null}
 
           {results.length === 0 && !isSearching ? (
             <div className="flex h-full min-h-[620px] items-center justify-center border border-dashed border-stone-300 bg-white px-6 text-center">
@@ -413,7 +333,7 @@ export default function Home() {
                     ))}
                   </div>
 
-                    {result.analysis ? (
+                  {result.analysis ? (
                     <div className="mt-5 grid gap-4 border-t border-stone-200 pt-4 md:grid-cols-3">
                       <InsightList title="Why it overlaps" items={result.analysis.common} />
                       <InsightList title="What differs" items={result.analysis.different} />
