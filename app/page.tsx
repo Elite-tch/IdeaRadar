@@ -404,7 +404,7 @@ export default function Home() {
           ) : null}
 
           {results.length > 0 ? (
-            <div className="space-y-4 overflow-hidden md:max-w-[80%]">
+            <div className="space-y-4 overflow-hidden md:max-w-[80%] mx-auto">
 
 
               <section className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm sm:p-5">
