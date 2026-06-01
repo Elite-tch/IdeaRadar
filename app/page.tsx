@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import {
@@ -151,7 +151,7 @@ export default function Home() {
     });
   }, [results]);
 
-  const topComparison = useMemo(() => results.slice(0, 3), [results]);
+  const topComparison = useMemo(() => results.slice(0, 2), [results]);
 
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -410,9 +410,9 @@ export default function Home() {
               <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-semibold">Competitor comparison</h3>
                 <p className="mt-1 text-xs leading-5 text-stone-500">
-                  The top three matches side by side, so you can quickly see who is closest and where your wedge is.
+                  The top two matches side by side, so you can quickly see who is closest and where your wedge is.
                 </p>
-                <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                <div className="mt-4 grid gap-3 lg:grid-cols-2">
                   {topComparison.map((result, index) => (
                     <div key={result.id} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
                       <div className="flex items-center gap-2">
