@@ -17,13 +17,6 @@ type Facets = {
   totalCompanies: number;
 };
 
-type SourceSummary = {
-  url: string;
-  host: string;
-  quality: "clear" | "thin" | "missing";
-  summary: string;
-};
-
 type Analysis = {
   verdict: "direct competitor" | "adjacent" | "inspiration";
   common: string[];
@@ -55,6 +48,7 @@ type SearchResult = {
 };
 
 const exampleIdea = `A workspace for small B2B SaaS teams that turns customer calls, support tickets, and product feedback into a living opportunity map. Product managers can see repeated pain points, competitor mentions, deal blockers, and feature requests, then connect them to roadmap bets.`;
+const MAX_IDEA_LENGTH = 12000;
 
 const modes = [
   { value: "validate", label: "Validate idea" },
@@ -69,7 +63,7 @@ export default function Home() {
   const [sourceType, setSourceType] = useState<"live" | "upload" | "">("");
   const [projectUrls, setProjectUrls] = useState<string[]>([""]);
   const [facets, setFacets] = useState<Facets | null>(null);
-  const [sourceSummaries, setSourceSummaries] = useState<SourceSummary[]>([]);
+  const [ideaLimitNotice, setIdeaLimitNotice] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [error, setError] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -92,73 +86,24 @@ export default function Home() {
     return !isSearching && (hasIdeaText || hasSourceUrl);
   }, [ideaText, hasSourceUrl, isSearching]);
 
-  const laneCounts = useMemo(() => {
-    const counts = {
-      direct: 0,
-      adjacent: 0,
-      inspiration: 0,
-    };
-
-    for (const result of results) {
-      if (result.analysis?.verdict === "direct competitor") {
-        counts.direct += 1;
-      } else if (result.analysis?.verdict === "adjacent") {
-        counts.adjacent += 1;
-      } else {
-        counts.inspiration += 1;
-      }
-    }
-
-    return counts;
-  }, [results]);
-
-  const saturation = useMemo(() => {
-    if (!results.length) {
-      return { label: "Open", value: 0, tone: "low" as const };
-    }
-
-    const topScores = results.slice(0, 5).map((result) => result.score);
-    const averageScore = topScores.reduce((total, score) => total + score, 0) / topScores.length;
-    const directCount = results.filter((result) => result.analysis?.verdict === "direct competitor").length;
-    const density = Math.min(1, averageScore * 0.7 + (directCount / Math.max(results.length, 1)) * 0.5);
-
-    if (density >= 0.72) {
-      return { label: "Crowded", value: density, tone: "high" as const };
-    }
-
-    if (density >= 0.45) {
-      return { label: "Mixed", value: density, tone: "medium" as const };
-    }
-
-    return { label: "Open", value: density, tone: "low" as const };
-  }, [results]);
-
-  const landscapePoints = useMemo(() => {
-    return results.slice(0, 8).map((result, index) => {
-      const score = clamp(result.score, 0, 1);
-      const directBoost = result.analysis?.verdict === "direct competitor" ? 16 : result.analysis?.verdict === "adjacent" ? 10 : 4;
-      const x = 10 + ((hashString(result.payload.name) % 72) / 72) * 80;
-      const y = 14 + (1 - score) * 56 + directBoost + index * 0.8;
-      return {
-        id: result.id,
-        name: result.payload.name,
-        x,
-        y: clamp(y, 10, 88),
-        score,
-        risk: result.analysis?.risk ?? "low",
-        lane: result.analysis?.verdict ?? "inspiration",
-      };
-    });
-  }, [results]);
-
   const topComparison = useMemo(() => results.slice(0, 2), [results]);
+
+  function updateIdeaText(value: string) {
+    if (value.length > MAX_IDEA_LENGTH) {
+      setIdeaText(value.slice(0, MAX_IDEA_LENGTH));
+      setIdeaLimitNotice("Text limit reached. Extra characters were ignored.");
+      return;
+    }
+
+    setIdeaText(value);
+    setIdeaLimitNotice("");
+  }
 
   async function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSearching(true);
     setError("");
     setResults([]);
-    setSourceSummaries([]);
 
     const response = await fetch("/api/search", {
       method: "POST",
@@ -179,7 +124,6 @@ export default function Home() {
       return;
     }
 
-    setSourceSummaries(data.sources ?? []);
     setResults(data.results ?? []);
   }
 
@@ -208,7 +152,7 @@ export default function Home() {
       return;
     }
 
-    setIdeaText(data.text);
+    updateIdeaText(data.text);
   }
 
   return (
@@ -229,7 +173,7 @@ export default function Home() {
           <button
             className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-stone-300 px-3 py-2 text-sm font-medium hover:bg-stone-50 sm:w-auto"
             type="button"
-            onClick={() => setIdeaText(exampleIdea)}
+            onClick={() => updateIdeaText(exampleIdea)}
           >
             <FileText size={16} />
             Example
@@ -268,10 +212,11 @@ export default function Home() {
                       setSourceType(option.value as typeof sourceType);
                       if (option.value === "") {
                         setProjectUrls([""]);
+                        setIdeaLimitNotice("");
                         return;
                       }
 
-                      setIdeaText("");
+                      updateIdeaText("");
                       if (option.value === "upload") {
                         setProjectUrls([""]);
                         return;
@@ -318,7 +263,7 @@ export default function Home() {
                   msOverflowStyle: "none",
                 }}
                 value={ideaText}
-                onChange={(event) => setIdeaText(event.target.value)}
+                onChange={(event) => updateIdeaText(event.target.value)}
                 placeholder="Paste a PRD, pitch, README, product spec, or customer problem note..."
                 disabled={sourceType === "live"}
               />
@@ -345,6 +290,7 @@ export default function Home() {
             <p className="text-xs leading-5 text-stone-500">
               Supported files: DOCX, TXT, MD, Markdown, JSON, CSV.
             </p>
+            {ideaLimitNotice ? <p className="text-xs leading-5 text-amber-700">{ideaLimitNotice}</p> : null}
           </div>
 
           <div className="space-y-3">
@@ -606,18 +552,4 @@ function UrlFieldGroup({
       <p className="text-xs font-medium text-emerald-700">{addLabel}</p>
     </div>
   );
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function hashString(value: string) {
-  let hash = 0;
-
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
-  }
-
-  return hash;
 }
