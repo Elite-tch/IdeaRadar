@@ -260,8 +260,8 @@ export default function Home() {
                   <button
                     key={option.value || "text"}
                     className={`rounded-md border px-3 py-2 text-sm font-medium ${sourceType === option.value
-                        ? "border-emerald-700 bg-emerald-700 text-white"
-                        : "border-stone-300 bg-white hover:bg-stone-50"
+                      ? "border-emerald-700 bg-emerald-700 text-white"
+                      : "border-stone-300 bg-white hover:bg-stone-50"
                       }`}
                     type="button"
                     onClick={() => {
@@ -308,10 +308,10 @@ export default function Home() {
               <textarea
                 id="idea"
                 className={`min-h-46 w-full resize-y rounded-md border p-3 text-sm leading-6 outline-none no-scrollbar ${sourceType === ""
+                  ? "border-stone-300 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                  : sourceType === "upload"
                     ? "border-stone-300 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                    : sourceType === "upload"
-                      ? "border-stone-300 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                      : "border-stone-200 bg-stone-100 text-stone-400"
+                    : "border-stone-200 bg-stone-100 text-stone-400"
                   }`}
                 style={{
                   scrollbarWidth: "none",
@@ -326,8 +326,8 @@ export default function Home() {
             <div className="flex items-center justify-between gap-3">
               <label
                 className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium ${sourceType === "upload"
-                    ? "cursor-pointer border-stone-300 bg-white hover:bg-stone-50"
-                    : "cursor-not-allowed border-stone-200 bg-stone-100 text-stone-400"
+                  ? "cursor-pointer border-stone-300 bg-white hover:bg-stone-50"
+                  : "cursor-not-allowed border-stone-200 bg-stone-100 text-stone-400"
                   }`}
               >
                 <FileText size={16} />
@@ -405,130 +405,7 @@ export default function Home() {
 
           {results.length > 0 ? (
             <div className="space-y-4">
-              <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-                <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h3 className="text-sm font-semibold">Semantic landscape</h3>
-                      <p className="text-xs leading-5 text-stone-500">
-                        Bubble positions reflect similarity and risk. Direct matches drift higher and heavier.
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${saturation.tone === "high"
-                          ? "bg-red-50 text-red-700"
-                          : saturation.tone === "medium"
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-emerald-50 text-emerald-700"
-                        }`}
-                    >
-                      {saturation.label} market
-                    </span>
-                  </div>
 
-                  <div className="mt-4 grid grid-cols-3 gap-3">
-                    {[
-                      { label: "Direct", value: laneCounts.direct },
-                      { label: "Adjacent", value: laneCounts.adjacent },
-                      { label: "Inspiration", value: laneCounts.inspiration },
-                    ].map((lane) => (
-                      <div key={lane.label} className="rounded-md border border-stone-200 bg-stone-50 p-3">
-                        <div className="text-xs uppercase tracking-wide text-stone-500">{lane.label}</div>
-                        <div className="mt-1 text-2xl font-semibold">{lane.value}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 h-64 rounded-xl border border-stone-200 bg-gradient-to-br from-white to-stone-50 p-3">
-                    <div className="relative h-full w-full overflow-hidden rounded-lg bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.10),_transparent_24%)]">
-                      {landscapePoints.map((point) => (
-                        <div
-                          key={point.id}
-                          className={`absolute flex min-h-10 items-center justify-center rounded-full border px-3 py-2 text-xs font-semibold shadow-sm ${point.lane === "direct competitor"
-                              ? "border-red-200 bg-red-50 text-red-700"
-                              : point.lane === "adjacent"
-                                ? "border-amber-200 bg-amber-50 text-amber-700"
-                                : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            }`}
-                          style={{
-                            left: `${point.x}%`,
-                            top: `${point.y}%`,
-                            transform: "translate(-50%, -50%)",
-                            width: `${Math.max(88, point.score * 115)}px`,
-                            opacity: 0.96,
-                          }}
-                          title={point.name}
-                        >
-                          <span className="truncate">{point.name}</span>
-                        </div>
-                      ))}
-                      <div className="absolute left-3 top-3 rounded-md bg-white/90 px-2 py-1 text-[11px] text-stone-500 shadow-sm">
-                        More direct
-                      </div>
-                      <div className="absolute right-3 top-3 rounded-md bg-white/90 px-2 py-1 text-[11px] text-stone-500 shadow-sm">
-                        More adjacent
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="space-y-4">
-                  <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
-                    <h3 className="text-sm font-semibold">Market saturation</h3>
-                    <p className="mt-1 text-xs leading-5 text-stone-500">
-                      A quick read on how crowded this space feels from the top matches.
-                    </p>
-                    <div className="mt-4 h-3 overflow-hidden rounded-full bg-stone-100">
-                      <div
-                        className={`h-full rounded-full ${saturation.tone === "high"
-                            ? "bg-red-500"
-                            : saturation.tone === "medium"
-                              ? "bg-amber-500"
-                              : "bg-emerald-500"
-                          }`}
-                        style={{ width: `${Math.max(8, saturation.value * 100)}%` }}
-                      />
-                    </div>
-                    <div className="mt-3 flex items-center justify-between text-sm">
-                      <span className="text-stone-500">Crowding</span>
-                      <span className="font-semibold text-stone-900">{Math.round(saturation.value * 100)}%</span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
-                    <h3 className="text-sm font-semibold">Source quality</h3>
-                    <p className="mt-1 text-xs leading-5 text-stone-500">
-                      Live URLs are scored by how much useful page text we can extract.
-                    </p>
-                    <div className="mt-3 space-y-2">
-                      {sourceSummaries.length > 0 ? (
-                        sourceSummaries.map((source) => (
-                          <div key={source.url} className="rounded-md border border-stone-200 bg-stone-50 p-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="truncate text-sm font-medium">{source.host || source.url}</span>
-                              <span
-                                className={`rounded-full px-2 py-1 text-[11px] font-medium ${source.quality === "clear"
-                                    ? "bg-emerald-50 text-emerald-700"
-                                    : source.quality === "thin"
-                                      ? "bg-amber-50 text-amber-700"
-                                      : "bg-red-50 text-red-700"
-                                  }`}
-                              >
-                                {source.quality}
-                              </span>
-                            </div>
-                            <p className="mt-2 line-clamp-3 text-xs leading-5 text-stone-600">{source.summary}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="rounded-md border border-dashed border-stone-200 p-3 text-xs text-stone-500">
-                          No live project URL source was used in this search.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </section>
-              </div>
 
               <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-semibold">Competitor comparison</h3>
@@ -592,10 +469,10 @@ export default function Home() {
                           {result.analysis ? (
                             <span
                               className={`rounded-sm px-2 py-1 text-xs font-medium ${result.analysis.verdict === "direct competitor"
-                                  ? "bg-red-50 text-red-700"
-                                  : result.analysis.verdict === "adjacent"
-                                    ? "bg-amber-50 text-amber-700"
-                                    : "bg-slate-100 text-slate-700"
+                                ? "bg-red-50 text-red-700"
+                                : result.analysis.verdict === "adjacent"
+                                  ? "bg-amber-50 text-amber-700"
+                                  : "bg-slate-100 text-slate-700"
                                 }`}
                             >
                               {result.analysis.verdict}
