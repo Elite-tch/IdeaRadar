@@ -7,16 +7,9 @@ IdeaRadar helps founders compare a startup idea against a real market corpus. It
 - Paste an idea into the text box.
 - Upload a document: `DOCX`, `TXT`, `MD`, `Markdown`, `JSON`, or `CSV`.
 - Paste a live project URL and extract the page title, description, and visible text.
-- Search a real YC company corpus indexed in Qdrant Cloud.
+- Search a real company corpus indexed in Qdrant Cloud.
 - See the closest matches, why they overlap, what differs, and how to position the idea better.
 - Review a semantic landscape, saturation meter, and top-three comparison panel.
-
-## Why it stands out
-
-- No chatbot loop.
-- Real Qdrant-backed retrieval.
-- Clear source-mode UX: one input path at a time.
-- Founder-friendly competitive analysis instead of raw similarity scores.
 
 ## Architecture
 

@@ -309,7 +309,9 @@ export default function Home() {
                 id="idea"
                 className={`min-h-46 w-full resize-y rounded-md border p-3 text-sm leading-6 outline-none no-scrollbar ${sourceType === ""
                     ? "border-stone-300 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-                    : "border-stone-200 bg-stone-100 text-stone-400"
+                    : sourceType === "upload"
+                      ? "border-stone-300 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                      : "border-stone-200 bg-stone-100 text-stone-400"
                   }`}
                 style={{
                   scrollbarWidth: "none",
@@ -318,7 +320,7 @@ export default function Home() {
                 value={ideaText}
                 onChange={(event) => setIdeaText(event.target.value)}
                 placeholder="Paste a PRD, pitch, README, product spec, or customer problem note..."
-                disabled={sourceType !== ""}
+                disabled={sourceType === "live"}
               />
             </div>
             <div className="flex items-center justify-between gap-3">
